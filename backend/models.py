@@ -65,10 +65,15 @@ class Project(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     title: str
     description: str
+    detailed_description: Optional[str] = None  # Longer description for detail page
     category: List[str] = []
     bgColor: Optional[str] = "light-pink"
     year: Optional[str] = None
     client: Optional[str] = None
+    # New image fields for detail pages
+    thumbnail_image: Optional[str] = None  # Main thumbnail for cards
+    static_images: Optional[List[str]] = []  # Static images for detail page
+    carousel_images: Optional[List[str]] = []  # Images for carousel
     order: Optional[int] = 0
     active: bool = True
     created_at: datetime = Field(default_factory=datetime.utcnow)
@@ -77,18 +82,26 @@ class Project(BaseModel):
 class ProjectCreate(BaseModel):
     title: str
     description: str
+    detailed_description: Optional[str] = None
     category: Optional[List[str]] = []
     bgColor: Optional[str] = "light-pink"
     year: Optional[str] = None
     client: Optional[str] = None
+    thumbnail_image: Optional[str] = None
+    static_images: Optional[List[str]] = []
+    carousel_images: Optional[List[str]] = []
     order: Optional[int] = 0
 
 class ProjectUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
+    detailed_description: Optional[str] = None
     category: Optional[List[str]] = None
     bgColor: Optional[str] = None
     year: Optional[str] = None
     client: Optional[str] = None
+    thumbnail_image: Optional[str] = None
+    static_images: Optional[List[str]] = None
+    carousel_images: Optional[List[str]] = None
     order: Optional[int] = None
     active: Optional[bool] = None

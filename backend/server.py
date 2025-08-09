@@ -134,7 +134,7 @@ async def delete_service(service_id: str):
 # Projects endpoints
 @api_router.get("/projects")
 async def get_projects():
-    """Get all active projects ordered by order field"""
+    """Get all active projects ordered by order field (for home page)"""
     try:
         projects_cursor = projects_collection.find({"active": True}).sort("order", 1)
         projects = await projects_cursor.to_list(100)
@@ -143,6 +143,21 @@ async def get_projects():
         return {"success": True, "data": projects}
     except Exception as e:
         logging.error(f"Error fetching projects: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@api_router.get("/projects/{project_id}")
+async def get_project_detail(project_id: str):
+    """Get individual project details by ID"""
+    try:
+        project = await projects_collection.find_one({"id": project_id, "active": True})
+        
+        if not project:
+            raise HTTPException(status_code=404, detail="Project not found")
+            
+        project = convert_object_id(project)
+        return {"success": True, "data": project}
+    except Exception as e:
+        logging.error(f"Error fetching project detail: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 @api_router.post("/projects")
