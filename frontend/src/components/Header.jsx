@@ -1,15 +1,29 @@
 import React from 'react';
-import { portfolioData } from '../mock';
 
-const Header = () => {
-  const { personal, navigation } = portfolioData;
-
+const Header = ({ personal, navigation }) => {
   const scrollToSection = (href) => {
     const element = document.querySelector(href);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
+
+  if (!personal || !navigation) {
+    return (
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-100">
+        <div className="container mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="w-32 h-6 bg-gray-200 animate-pulse rounded"></div>
+            <div className="hidden md:flex space-x-8">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="w-16 h-4 bg-gray-200 animate-pulse rounded"></div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </header>
+    );
+  }
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-100">

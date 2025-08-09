@@ -1,20 +1,128 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import "./App.css";
 import Header from './components/Header';
 import ProjectCard from './components/ProjectCard';
 import ServiceCard from './components/ServiceCard';
-import { portfolioData } from './mock';
+import LoadingSpinner from './components/LoadingSpinner';
+import { portfolioAPI, servicesAPI, projectsAPI } from './services/api';
 
 const App = () => {
-  const { personal, projects, services, about } = portfolioData;
+  // State for data
+  const [portfolioData, setPortfolioData] = useState(null);
+  const [services, setServices] = useState([]);
+  const [projects, setProjects] = useState([]);
+  
+  // Loading states
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  // Individual loading states for better UX
+  const [portfolioLoading, setPortfolioLoading] = useState(true);
+  const [servicesLoading, setServicesLoading] = useState(true);
+  const [projectsLoading, setProjectsLoading] = useState(true);
+
+  // Fetch portfolio data
+  const fetchPortfolio = async () => {
+    try {
+      setPortfolioLoading(true);
+      const response = await portfolioAPI.getPortfolio();
+      if (response.success) {
+        setPortfolioData(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching portfolio:', error);
+      setError(error.message);
+    } finally {
+      setPortfolioLoading(false);
+    }
+  };
+
+  // Fetch services data
+  const fetchServices = async () => {
+    try {
+      setServicesLoading(true);
+      const response = await servicesAPI.getServices();
+      if (response.success) {
+        setServices(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching services:', error);
+      setError(error.message);
+    } finally {
+      setServicesLoading(false);
+    }
+  };
+
+  // Fetch projects data
+  const fetchProjects = async () => {
+    try {
+      setProjectsLoading(true);
+      const response = await projectsAPI.getProjects();
+      if (response.success) {
+        setProjects(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching projects:', error);
+      setError(error.message);
+    } finally {
+      setProjectsLoading(false);
+    }
+  };
+
+  // Load all data on component mount
+  useEffect(() => {
+    const loadData = async () => {
+      await Promise.all([
+        fetchPortfolio(),
+        fetchServices(),
+        fetchProjects()
+      ]);
+      setLoading(false);
+    };
+
+    loadData();
+  }, []);
 
   const handleContactClick = () => {
-    window.location.href = `mailto:${personal.email}`;
+    if (portfolioData?.personal?.email) {
+      window.location.href = `mailto:${portfolioData.personal.email}`;
+    }
   };
+
+  // Show loading spinner while initial data is being fetched
+  if (loading || !portfolioData) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <LoadingSpinner size="large" />
+          <p className="mt-4 text-gray-600">Loading portfolio...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">Error loading portfolio: {error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="bg-gray-900 text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const { personal, about, navigation } = portfolioData;
 
   return (
     <div className="min-h-screen bg-white">
-      <Header />
+      <Header personal={personal} navigation={navigation} />
       
       {/* Hero Section */}
       <section className="pt-24 pb-16 px-6">
@@ -43,11 +151,18 @@ const App = () => {
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {projects.map((project) => (
-              <ProjectCard key={project.id} project={project} />
-            ))}
-          </div>
+          {projectsLoading ? (
+            <div className="text-center py-12">
+              <LoadingSpinner size="large" />
+              <p className="mt-4 text-gray-600">Loading projects...</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {projects.map((project) => (
+                <ProjectCard key={project.id} project={project} />
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -63,11 +178,18 @@ const App = () => {
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {services.map((service) => (
-              <ServiceCard key={service.id} service={service} />
-            ))}
-          </div>
+          {servicesLoading ? (
+            <div className="text-center py-12">
+              <LoadingSpinner size="large" />
+              <p className="mt-4 text-gray-600">Loading services...</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {services.map((service) => (
+                <ServiceCard key={service.id} service={service} />
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -82,36 +204,44 @@ const App = () => {
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
             <div>
-              <p className="text-lg text-gray-700 leading-relaxed mb-8">
-                {about.bio}
-              </p>
+              {about?.bio && (
+                <p className="text-lg text-gray-700 leading-relaxed mb-8">
+                  {about.bio}
+                </p>
+              )}
               
-              <div className="mb-8">
-                <h3 className="text-xl font-medium text-gray-900 mb-4">Experience</h3>
-                <div className="space-y-4">
-                  {about.experience.map((exp, index) => (
-                    <div key={index} className="border-l-2 border-gray-200 pl-4">
-                      <h4 className="font-medium text-gray-900">{exp.role}</h4>
-                      <p className="text-gray-600">{exp.company}</p>
-                      <p className="text-sm text-gray-500">{exp.period}</p>
-                    </div>
-                  ))}
+              {about?.experience && about.experience.length > 0 && (
+                <div className="mb-8">
+                  <h3 className="text-xl font-medium text-gray-900 mb-4">Experience</h3>
+                  <div className="space-y-4">
+                    {about.experience.map((exp, index) => (
+                      <div key={index} className="border-l-2 border-gray-200 pl-4">
+                        <h4 className="font-medium text-gray-900">{exp.role}</h4>
+                        <p className="text-gray-600">{exp.company}</p>
+                        <p className="text-sm text-gray-500">{exp.period}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
             
             <div>
-              <h3 className="text-xl font-medium text-gray-900 mb-6">Skills & Tools</h3>
-              <div className="flex flex-wrap gap-2">
-                {about.skills.map((skill, index) => (
-                  <span 
-                    key={index}
-                    className="px-3 py-2 bg-white border border-gray-200 rounded-full text-sm text-gray-700 hover:border-gray-300 transition-colors duration-200"
-                  >
-                    {skill}
-                  </span>
-                ))}
-              </div>
+              {about?.skills && about.skills.length > 0 && (
+                <>
+                  <h3 className="text-xl font-medium text-gray-900 mb-6">Skills & Tools</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {about.skills.map((skill, index) => (
+                      <span 
+                        key={index}
+                        className="px-3 py-2 bg-white border border-gray-200 rounded-full text-sm text-gray-700 hover:border-gray-300 transition-colors duration-200"
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -128,15 +258,21 @@ const App = () => {
           </p>
           
           <div className="space-y-4 mb-12">
-            <p className="text-lg text-gray-700">
-              <strong>Email:</strong> {personal.email}
-            </p>
-            <p className="text-lg text-gray-700">
-              <strong>Phone:</strong> {personal.phone}
-            </p>
-            <p className="text-lg text-gray-700">
-              <strong>Location:</strong> {personal.location}
-            </p>
+            {personal.email && (
+              <p className="text-lg text-gray-700">
+                <strong>Email:</strong> {personal.email}
+              </p>
+            )}
+            {personal.phone && (
+              <p className="text-lg text-gray-700">
+                <strong>Phone:</strong> {personal.phone}
+              </p>
+            )}
+            {personal.location && (
+              <p className="text-lg text-gray-700">
+                <strong>Location:</strong> {personal.location}
+              </p>
+            )}
           </div>
           
           <button 
