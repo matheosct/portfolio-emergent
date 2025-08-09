@@ -114,6 +114,16 @@ export const projectsAPI = {
     }
   },
 
+  // Get individual project details
+  getProjectDetail: async (projectId) => {
+    try {
+      const response = await api.get(`/projects/${projectId}`);
+      return response.data;
+    } catch (error) {
+      throw new Error(`Failed to fetch project details: ${error.message}`);
+    }
+  },
+
   // Create new project
   createProject: async (projectData) => {
     try {

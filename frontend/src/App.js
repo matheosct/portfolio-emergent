@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react";
 import "./App.css";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Header from './components/Header';
 import ProjectCard from './components/ProjectCard';
 import ServiceCard from './components/ServiceCard';
 import LoadingSpinner from './components/LoadingSpinner';
+import ProjectDetail from './components/ProjectDetail';
 import { portfolioAPI, servicesAPI, projectsAPI } from './services/api';
 
-const App = () => {
+const HomePage = () => {
   // State for data
   const [portfolioData, setPortfolioData] = useState(null);
   const [services, setServices] = useState([]);
@@ -306,6 +308,35 @@ const App = () => {
         </div>
       </footer>
     </div>
+  );
+};
+
+const App = () => {
+  const [portfolioData, setPortfolioData] = useState(null);
+
+  useEffect(() => {
+    // Fetch portfolio data once for the entire app
+    const fetchPortfolio = async () => {
+      try {
+        const response = await portfolioAPI.getPortfolio();
+        if (response.success) {
+          setPortfolioData(response.data);
+        }
+      } catch (error) {
+        console.error('Error fetching portfolio for app:', error);
+      }
+    };
+
+    fetchPortfolio();
+  }, []);
+
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/project/:projectId" element={<ProjectDetail portfolioData={portfolioData} />} />
+      </Routes>
+    </BrowserRouter>
   );
 };
 
